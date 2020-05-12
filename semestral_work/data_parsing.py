@@ -1,4 +1,5 @@
 import pandas as pd
+
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -16,7 +17,7 @@ def get_dataframes_months(url, topics, years):
 
         table = soup.find("table")
         df = pd.read_html(str(table), index_col=0)[0]
-        df.columns.set_levels([df.columns[3*i][0] + ' ' + link[-4:] for i in range(len(df.columns.levels[0]))], level=0, inplace=True)
+        #df.columns.set_levels([df.columns[3*i][0] + ' ' + link[-4:] for i in range(len(df.columns.levels[0]))], level=0, inplace=True)
         dataframes_months.append(df)
     
     return dataframes_months
@@ -34,7 +35,7 @@ def get_dataframes_days(url, topics, years):
 
         text = str(soup.find_all('script')[3])
 
-        mod = 'total'
+        mod = 'total' # total, internal or external
         m = re.search(f'{mod}.*\'data\':\[([^\]]+)\]', text)
 
         data = enumerate(m.group(1).split(','), start=1)
@@ -79,8 +80,9 @@ years = [i for i in range(2015, 2021)]
 dataframes_months = get_dataframes_months(url, topics, years)
 save_months_to_csv(dataframes_months, 'months', topics, years)
 
-# using only data for 2019 and for access and login, not all availible days data
-topics = ['access', 'login']
+# only data for 2019
+# daily ratings data is not interesting
+topics = ['access', 'login', 'search']
 years = [2019]
 dataframes_days = get_dataframes_days(url, topics, years)
 save_days_to_csv(dataframes_days, 'days', topics, years)
