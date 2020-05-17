@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import os
 
 
 def get_dataframes_months(url, topics, years):
@@ -25,6 +26,7 @@ def get_dataframes_months(url, topics, years):
 
 def get_dataframes_days(url, topics, years):
     # get links to subsites with days data for given topics and years
+    # includes links to nonexisting data -> resulting dataframes are filled with zeroes
     links = [f'{url}/{topic}/{year}/{month}' for topic in topics for year in years for month in range(1,13)]
 
     # loop through all links and parse data from them into dataframes
@@ -57,36 +59,50 @@ def get_dataframes_days(url, topics, years):
 
 
 def save_months_to_csv(dataframes, subfolder, topics, years):
+    # create file structure if not exists
+    path = os.path.join('data', subfolder)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
     i = 0
     for topic in topics:
         for year in years:
-            dataframes[i].to_csv(f'data/{subfolder}/{topic}_{year}.csv')
+            path = os.path.join('data', subfolder, f'{topic}_{year}.csv')
+            dataframes[i].to_csv(path)
             i += 1
 
 
 def save_days_to_csv(dataframes, subfolder, topics, years):
+    # create file structure if not exists
+    paths = [os.path.join('data', subfolder, str(year)) for year in years]
+    for path in paths:
+        if not os.path.exists(path):
+            os.makedirs(path)
+
     i = 0
     for topic in topics:
         for year in years:
             for month in range(1,13):
-                dataframes[i].to_csv(f'data/{subfolder}/{year}/{topic}_{year}_{month}.csv')
+                path = os.path.join('data', subfolder, str(year), f'{topic}_{year}_{month}.csv')
+                dataframes[i].to_csv(path)
                 i += 1
 
 
-'''
-all availible topics are: access, login, rating, search, summary
-    summary contains data from access, login and search
-all availible years are: 2015 - 2020
-'''
+# parse data only when called as script
+if __name__ == "__main__":
+    '''
+    all availible topics are: access, login, rating, search, summary
+        summary contains data from access, login and search
+    all availible years are: 2015 - 2020
+    '''
 
-# url = 'https://susice.tritius.cz/statistics'
-# years = [i for i in range(2015, 2021)]
+    url = 'https://susice.tritius.cz/statistics'
+    years = [i for i in range(2015, 2021)]
 
-# topics = ['rating', 'summary']
-# dataframes_months = get_dataframes_months(url, topics, years)
-# save_months_to_csv(dataframes_months, 'months', topics, years)
+    topics = ['rating', 'summary']
+    dataframes_months = get_dataframes_months(url, topics, years)
+    save_months_to_csv(dataframes_months, 'months', topics, years)
 
-# # daily ratings data is not interesting
-# topics = ['access', 'login', 'search']
-# dataframes_days = get_dataframes_days(url, topics, years)
-# save_days_to_csv(dataframes_days, 'days/', topics, years)
+    topics = ['access', 'login', 'search']
+    dataframes_days = get_dataframes_days(url, topics, years)
+    save_days_to_csv(dataframes_days, 'days/', topics, years)

@@ -2,22 +2,13 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
-
 import dash_bootstrap_components as dbc
-
-from bidict import bidict
 
 import pandas as pd
 
-import data_parsing as dapar
-
-# UPDATE DATA ON EACH APP START
-# url = 'https://susice.tritius.cz/statistics'
-
-# topics = ['summary']
-# years = [i for i in range(2015, 2021)]
-# dataframes_months = dapar.get_dataframes_months(url, topics, years)
-# dapar.save_months_to_csv(dataframes_months, 'months', topics, years)
+import os
+from bidict import bidict
+import urllib
 
 # CONFIG AND HELPER VARIABLES
 years = [year for year in range(2015, 2021)]
@@ -41,32 +32,61 @@ months = bidict({
 init_year = 2020
 
 # GLOBAL DATA
-summary = {year: pd.read_csv(f'data/months/summary_{year}.csv', header=[0,1], index_col=0) for year in years}
-rating = {year: pd.read_csv(f'data/months/rating_{year}.csv', header=[0,1], index_col=0) for year in years}
 
-access = {f'{year}:{month}': pd.read_csv(f'data/days/{year}/access_{year}_{month}.csv', index_col=0) for year in years for month in range(1,13)}
-login = {f'{year}:{month}': pd.read_csv(f'data/days/{year}/login_{year}_{month}.csv', index_col=0) for year in years for month in range(1,13)}
-search = {f'{year}:{month}': pd.read_csv(f'data/days/{year}/search_{year}_{month}.csv', index_col=0) for year in years for month in range(1,13)}
+# monthly
+summary = {
+    year: pd.read_csv(os.path.join('data', 'months', f'summary_{year}.csv'), header=[0,1], index_col=0)
+    for year in years
+}
+rating = {
+    year: pd.read_csv(os.path.join('data', 'months', f'rating_{year}.csv'), header=[0,1], index_col=0)
+    for year in years
+}
+
+# daily
+access = {
+    f'{year}:{month}': pd.read_csv(os.path.join('data', 'days', f'{year}', f'access_{year}_{month}.csv'), index_col=0)
+    for year in years
+    for month in range(1,13)
+}
+login = {
+    f'{year}:{month}': pd.read_csv(os.path.join('data', 'days', f'{year}', f'login_{year}_{month}.csv'), index_col=0)
+    for year in years
+    for month in range(1,13)
+}
+search = {
+    f'{year}:{month}': pd.read_csv(os.path.join('data', 'days', f'{year}', f'search_{year}_{month}.csv'), index_col=0)
+    for year in years
+    for month in range(1,13)
+}
 
 # DASH APP INIT
 css = [dbc.themes.SUPERHERO]
 app = dash.Dash(__name__, external_stylesheets=css)
 app.title = 'Statistiky | Městská knihovna Sušice'
 
-###################################################################################################
-##########################################  L A Y O U T  ##########################################
-###################################################################################################
+#############################################################################################################################################################
+##  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ##
+#############################################################################################################################################################
 
 # VISUALIZATION TAB
 tab_graph = html.Div([
-    html.Div(id='rating'),
     # GRAPHS
     html.Div([
         # GRAPH SUMMARY DAILY
-        dcc.Graph(id='graph_summary_daily', className="col-8"),
+        html.Div([
+            dcc.Markdown('#### Celková denní data', style={'textAlign': 'center'}),
+            dcc.Graph(id='graph_summary_daily')
+        ], className="col-8"),
         # GRAPH SUMMARY MONTHLY
-        dcc.Graph(id='graph_summary_monthly', className="col-4")
-    ], className="row"),
+        html.Div([
+            dcc.Markdown('#### Celková měsíční data', style={'textAlign': 'center'}),
+            dcc.Graph(id='graph_summary_monthly')
+        ], className="col-4")
+    ], className="row", style={'margin': '20px 0 0 0'}),
+
+    # RATING NUMBERS
+    html.Div(id='rating'),
 
     # MONTH SLIDER
     html.Div([
@@ -76,12 +96,24 @@ tab_graph = html.Div([
             max=13,
             step=None,
         )
-    ], style={'margin': '30px 200px 0 200px'})
+    ], style={'margin': '30px 200px 0 200px'}),
 ])
 
 # DATA TAB
 tab_data = html.Div([
-    dcc.Markdown('''### VYHLEDÁVÁNÍ - PŘÍSTUPY - PŘIHLAŠOVÁNÍ''', style={'text-align': 'center', 'margin': '25px'}),
+    # TITLE AND DONWLOAD LINK
+    html.Div([
+        dcc.Markdown('''### VYHLEDÁVÁNÍ - PŘÍSTUPY - PŘIHLAŠOVÁNÍ'''),
+        html.A(
+            'Stáhnout roční data',
+            id='link_download',
+            download="rawdata.csv",
+            href='',
+            target="_blank",
+            style={'margin': 'auto'}
+        ),
+    ], style={'text-align': 'center', 'margin': '25px'}),
+    # TABLE
     html.Div(id='table_summary'),
 
     dcc.Markdown('''### HODNOCENÍ''', style={'text-align': 'center', 'margin': '25px'}),
@@ -107,16 +139,16 @@ app.layout = html.Div([
             id='radio_year',
         ),
     ], style={'margin': '20px 0 0 0', 'textAlign': 'center'}),
-
+    # TABS
     dbc.Tabs([
         dbc.Tab(tab_graph, label='Vizualizace', tab_style={'width': '200px', 'textAlign': 'center', 'margin': 'auto'}, label_style={'color': '#37b800'}),
         dbc.Tab(tab_data, label='Data', tab_style={'width': '200px', 'textAlign': 'center', 'margin': 'auto'}, label_style={'color': '#00AEF9'}),
     ]),
 ])
 
-###############################################################################################
-#################################  I N T E R A C T I V I T Y  #################################
-###############################################################################################
+#############################################################################################################################################################
+##  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  #############  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  ##
+#############################################################################################################################################################
 
 # UPDATE SLIDER
 @app.callback(
@@ -135,7 +167,7 @@ def update_slider(year):
     Output('graph_summary_daily', 'figure'),
     [Input('radio_year', 'value'),
     Input('slider_month', 'value')])
-def update_figure(year, month):
+def update_figure_daily(year, month):
     # 13. month is data for whole year, which is not availible for concrete days
     # so we set month and year on January 2015 which is all zeroes
     if month == 13:
@@ -187,7 +219,7 @@ def update_figure(year, month):
     Output('graph_summary_monthly', 'figure'),
     [Input('radio_year', 'value'),
     Input('slider_month', 'value')])
-def update_figure(year, month):
+def update_figure_monthly(year, month):
     df = summary[year]
     filt = df.loc[months.inverse[month]]
 
@@ -307,9 +339,23 @@ def update_rating(year, month):
         html.Div(f'Hodnocení - hvězdičky: {rating_stars}', style={'textAlign': 'center'})   
     )
 
-#####################################################################################
-#####################################  M A I N  #####################################
-#####################################################################################
+
+# UPDATE DOWNLOAD LINK
+@app.callback(
+    [Output('link_download', 'download'),
+    Output('link_download', 'href')],
+    [Input('radio_year', 'value'),
+    Input('slider_month', 'value')])
+def update_download_link(year, month):
+    filt = summary[year]
+
+    csv_string = filt.to_csv(index=False, encoding='utf-8')
+    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
+    return f'summary_{year}.csv', csv_string
+
+#############################################################################################################################################################
+###  M A I N  #################  M A I N  #################  M A I N  #################  M A I N  #################  M A I N  #################  M A I N  ###
+#############################################################################################################################################################
 
 if __name__ == '__main__':
     app.run_server(debug=True)
