@@ -1,8 +1,8 @@
 import pandas as pd
-
 import requests
 from bs4 import BeautifulSoup
 import re
+import json
 
 
 def get_dataframes_months(url, topics, years):
@@ -34,11 +34,20 @@ def get_dataframes_days(url, topics, years):
         soup = BeautifulSoup(page.content, 'html.parser')
 
         text = str(soup.find_all('script')[3])
+        pattern = re.compile('var totalChartData = (.*?);')
+        match = pattern.search(text)
+        data = json.loads(match.groups()[0].replace('\'', '"').replace('\\', '')) # replaces are for removing invalid json parts
 
-        mod = 'total' # total, internal or external
-        m = re.search(f'{mod}.*\'data\':\[([^\]]+)\]', text)
+        # all data parts are summed together
+        res = []
+        for i in range(len(data['datasets'][0]['data'])):
+            val = 0
+            for j in range(len(data['datasets'])):
+                val += data['datasets'][j]['data'][i]
+            res.append(val)
 
-        data = enumerate(m.group(1).split(','), start=1)
+        data = enumerate(res, start=1)
+
         df = pd.DataFrame(data, columns=['Den', 'Počet']) 
         df.set_index('Den', inplace=True)
 
@@ -60,7 +69,7 @@ def save_days_to_csv(dataframes, subfolder, topics, years):
     for topic in topics:
         for year in years:
             for month in range(1,13):
-                dataframes[i].to_csv(f'data/{subfolder}/{topic}_{year}_{month}.csv')
+                dataframes[i].to_csv(f'data/{subfolder}/{year}/{topic}_{year}_{month}.csv')
                 i += 1
 
 
@@ -71,15 +80,13 @@ all availible years are: 2015 - 2020
 '''
 
 # url = 'https://susice.tritius.cz/statistics'
+# years = [i for i in range(2015, 2021)]
 
 # topics = ['rating', 'summary']
-# years = [i for i in range(2015, 2021)]
 # dataframes_months = get_dataframes_months(url, topics, years)
 # save_months_to_csv(dataframes_months, 'months', topics, years)
 
-# # only data for 2019
 # # daily ratings data is not interesting
 # topics = ['access', 'login', 'search']
-# years = [2019]
 # dataframes_days = get_dataframes_days(url, topics, years)
-# save_days_to_csv(dataframes_days, 'days', topics, years)
+# save_days_to_csv(dataframes_days, 'days/', topics, years)
