@@ -22,7 +22,7 @@ Spuštění aplikace:
 $ python app/data_visualization.py
 ```
 * Spustí Flask server s aplikací
-* Dostupný lokálně na adrese [127.0.0.1:8050](127.0.0.1:8050)
+* Dostupný lokálně na adrese [127.0.0.1:8050](http://127.0.0.1:8050/)
 
 Provedení testů:
 ```

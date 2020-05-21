@@ -10,6 +10,7 @@ import os
 from bidict import bidict
 import urllib
 
+
 # CONFIG AND HELPER VARIABLES
 years = [year for year in range(2015, 2021)]
 
@@ -31,8 +32,8 @@ months = bidict({
 
 init_year = 2020
 
-# GLOBAL DATA
 
+# GLOBAL DATA
 # monthly
 summary = {
     year: pd.read_csv(os.path.join('data', 'months', f'summary_{year}.csv'), header=[0,1], index_col=0)
@@ -60,6 +61,7 @@ search = {
     for month in range(1,13)
 }
 
+
 # DASH APP INIT
 css = [dbc.themes.SUPERHERO]
 app = dash.Dash(__name__, external_stylesheets=css)
@@ -77,13 +79,13 @@ tab_graph = html.Div([
         html.Div([
             dcc.Markdown('#### Celková denní data', style={'textAlign': 'center'}),
             dcc.Graph(id='graph_summary_daily')
-        ], className="col-8"),
+        ], className='col-8'),
         # GRAPH SUMMARY MONTHLY
         html.Div([
             dcc.Markdown('#### Celková měsíční data', style={'textAlign': 'center'}),
             dcc.Graph(id='graph_summary_monthly')
-        ], className="col-4")
-    ], className="row", style={'margin': '20px 0 0 0'}),
+        ], className='col-4')
+    ], className='row', style={'margin': '20px 0 0 0'}),
 
     # RATING NUMBERS
     html.Div(id='rating'),
@@ -99,17 +101,22 @@ tab_graph = html.Div([
     ], style={'margin': '30px 200px 0 200px'}),
 ])
 
+
 # DATA TAB
 tab_data = html.Div([
-    # TITLE AND DONWLOAD LINK
+    # TITLE AND DONWLOAD LINKS
     html.Div([
         dcc.Markdown('''### VYHLEDÁVÁNÍ - PŘÍSTUPY - PŘIHLAŠOVÁNÍ'''),
+        # CSV
         html.A(
-            'Stáhnout roční data',
-            id='link_download',
-            download="rawdata.csv",
-            href='',
-            target="_blank",
+            'Stáhnout roční data v CSV formátu', id='link_download_csv',
+            download='', href='', target='_blank',
+            style={'margin': 'auto 50px auto 0'}
+        ),
+        # HTML
+        html.A(
+            'Stáhnout roční data v HTML formátu', id='link_download_html',
+            download='', href='', target='_blank',
             style={'margin': 'auto'}
         ),
     ], style={'text-align': 'center', 'margin': '25px'}),
@@ -119,6 +126,7 @@ tab_data = html.Div([
     dcc.Markdown('''### HODNOCENÍ''', style={'text-align': 'center', 'margin': '25px'}),
     html.Div(id='table_rating'),
 ])
+
 
 # LAYOUT DESCRIPTION
 app.layout = html.Div([
@@ -204,7 +212,7 @@ def update_figure_daily(year, month):
             xaxis={'linecolor': '2b3e50', 'tickmode': 'linear'},
             yaxis={'range': [0, 200]},
             #margin={'l': 50, 'b': 100, 't': 50, 'r': 50},
-            legend={'xanchor':"center", 'yanchor':"top", 'y':1.3, 'x':0.5 },
+            legend={'xanchor':'center', 'yanchor':'top', 'y':1.3, 'x':0.5 },
             transition={'duration': 500}, # ugly efect when rescaling axis
             height=600,
             plot_bgcolor='#2b3e50',
@@ -266,7 +274,7 @@ def update_figure_monthly(year, month):
             yaxis={'linecolor': '2b3e50'},
             xaxis={'range': [0, max_range]},
             margin={'l': 90},
-            legend={'xanchor':"center", 'yanchor':"top", 'y':1.2, 'x':0.5 },
+            legend={'xanchor':'center', 'yanchor':'top', 'y':1.2, 'x':0.5 },
             transition={'duration': 0 if changed else 500}, # ugly efect when rescaling axis
             height=600,
             plot_bgcolor='#2b3e50',
@@ -333,25 +341,38 @@ def update_rating(year, month):
     rating_contrib = df.loc[months.inverse[month], 'Hodnocení - příspěvky']['Vše']
     rating_stars = df.loc[months.inverse[month], 'Hodnocení - hvězdičky']['Vše']
 
-    #return html.Div([f'Příspěvky: {rating_contrib}   |   Hvězdičky: {rating_stars}'])
     return (
         html.Div(f'Hodnocení - příspěvky: {rating_contrib}', style={'textAlign': 'center'}), 
         html.Div(f'Hodnocení - hvězdičky: {rating_stars}', style={'textAlign': 'center'})   
     )
 
 
-# UPDATE DOWNLOAD LINK
+# UPDATE DOWNLOAD CSV LINK
 @app.callback(
-    [Output('link_download', 'download'),
-    Output('link_download', 'href')],
+    [Output('link_download_csv', 'download'),
+    Output('link_download_csv', 'href')],
     [Input('radio_year', 'value'),
     Input('slider_month', 'value')])
-def update_download_link(year, month):
+def update_download_link_csv(year, month):
     filt = summary[year]
+    csv_string = filt.to_csv(index=True, encoding='utf-8')
+    csv_string = 'data:text/csv;charset=utf-8,' + urllib.parse.quote(csv_string)
 
-    csv_string = filt.to_csv(index=False, encoding='utf-8')
-    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return f'summary_{year}.csv', csv_string
+
+
+# UPDATE DOWNLOAD HTML LINK
+@app.callback(
+    [Output('link_download_html', 'download'),
+    Output('link_download_html', 'href')],
+    [Input('radio_year', 'value'),
+    Input('slider_month', 'value')])
+def update_download_link_html(year, month):
+    filt = summary[year]
+    html_string = filt.to_html(index=True)
+    html_string = 'data:text/csv;charset=utf-8,' + urllib.parse.quote(html_string)
+
+    return f'summary_{year}.html', html_string
 
 #############################################################################################################################################################
 ###  M A I N  #################  M A I N  #################  M A I N  #################  M A I N  #################  M A I N  #################  M A I N  ###
