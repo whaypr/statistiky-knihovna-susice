@@ -1,0 +1,1 @@
+web: gunicorn app/data_visualization:app.server
