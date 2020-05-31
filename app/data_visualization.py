@@ -85,7 +85,11 @@ tab_graph = html.Div([
                 id='graph_summary_daily',
                 config={
                     'displaylogo': False,
-                    'modeBarButtonsToRemove': ['pan2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'resetScale2d', 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'],
+                    'modeBarButtonsToRemove': [
+                        'pan2d', 'select2d', 'lasso2d', 'zoom2d','zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d',
+                        'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
+                    ],
+                    'scrollZoom': True
                 },
             )
         ], className='col-12 col-xl-8'),
@@ -97,7 +101,10 @@ tab_graph = html.Div([
                 id='graph_summary_monthly',
                 config={
                     'displaylogo': False,
-                    'modeBarButtonsToRemove': ['pan2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d', 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'],
+                    'modeBarButtonsToRemove': [
+                        'pan2d', 'select2d', 'lasso2d', 'zoom2d','zoomIn2d', 'zoomOut2d', 'resetScale2d',
+                        'autoScale2d', 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
+                    ],
                 }
             )
         ], className='col-12 col-xl-4')
