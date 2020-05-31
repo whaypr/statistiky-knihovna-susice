@@ -81,14 +81,28 @@ tab_graph = html.Div([
         # GRAPH SUMMARY DAILY
         html.Div([
             dcc.Markdown('#### Celková denní data', style={'textAlign': 'center'}),
-            dcc.Graph(id='graph_summary_daily')
-        ], className='col-12 col-lg-8'),
+            dcc.Graph(
+                id='graph_summary_daily',
+                config={
+                    'displaylogo': False,
+                    'modeBarButtonsToRemove': ['pan2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'resetScale2d', 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'],
+                },
+            )
+        ], className='col-12 col-xl-8'),
+
         # GRAPH SUMMARY MONTHLY
         html.Div([
             dcc.Markdown('#### Celková měsíční data', style={'textAlign': 'center'}),
-            dcc.Graph(id='graph_summary_monthly')
-        ], className='col-12 col-lg-4')
-    ], style={'margin': '20px auto auto auto'}),
+            dcc.Graph(
+                id='graph_summary_monthly',
+                config={
+                    'displaylogo': False,
+                    'modeBarButtonsToRemove': ['pan2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d', 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'],
+                }
+            )
+        ], className='col-12 col-xl-4')
+
+    ], style={'margin': '20px auto auto auto'}, no_gutters=True),
 
     # RATING NUMBERS
     html.Div(id='rating'),
@@ -101,7 +115,7 @@ tab_graph = html.Div([
             max=13,
             step=None,
         )
-    ], style={'margin': '30px auto 0 auto'}),
+    ], style={'margin': '30px auto 0 auto', 'font-size': '3em'}),
 ])
 
 
@@ -109,23 +123,30 @@ tab_graph = html.Div([
 tab_data = html.Div([
     # TITLE AND DONWLOAD LINKS
     html.Div([
-        dcc.Markdown('''### VYHLEDÁVÁNÍ - PŘÍSTUPY - PŘIHLAŠOVÁNÍ'''),
-        # CSV
-        html.A(
-            'Stáhnout roční data v CSV formátu', id='link_download_csv',
-            download='', href='', target='_blank',
-            style={'margin': 'auto 50px auto 0'}
-        ),
-        # HTML
-        html.A(
-            'Stáhnout roční data v HTML formátu', id='link_download_html',
-            download='', href='', target='_blank',
-            style={'margin': 'auto'}
-        ),
+        dcc.Markdown('''### VYHLEDÁVÁNÍ, PŘÍSTUPY, PŘIHLAŠOVÁNÍ'''),
+        dbc.Row([
+            # CSV LINK
+            dbc.Col([
+                html.A(
+                    'Stáhnout roční data [CSV]', id='link_download_csv',
+                    download='', href='', target='_blank'
+                ),
+            ]),
+            
+            # HTML LINK
+            dbc.Col([
+                html.A(
+                    'Stáhnout roční data [HTML]', id='link_download_html',
+                    download='', href='', target='_blank'
+                ),
+            ]),
+        ]),   
     ], style={'text-align': 'center', 'margin': '25px'}),
-    # TABLE
+
+    # TABLE SUMMARY
     html.Div(id='table_summary'),
 
+    # TABLE RATINGS
     dcc.Markdown('''### HODNOCENÍ''', style={'text-align': 'center', 'margin': '25px'}),
     html.Div(id='table_rating'),
 ])
@@ -168,7 +189,7 @@ app.layout = html.Div([
     [Input('radio_year', 'value')])
 def update_slider(year):
     return (
-        {months[month]: {'label': month, 'style': {'color': '#ffffff', 'fontSize': '1.1em'}} for month in summary[year].index.unique()},
+        {months[month]: {'label': month[:3] if month != 'Souhrnně celkem' else month, 'style': {'color': '#ffffff', 'fontSize': '1.1em'}} for month in summary[year].index.unique()},
         months[summary[year].index.unique()[0]]
     )
 
@@ -192,20 +213,20 @@ def update_figure_daily(year, month):
     data = [
         {
         'type': 'bar', 'name': 'Vyhledávání',
-        'x': [f'{day}' for day in ser.index],
-        'y': [ser.loc[day][0] for day in ser.index]
+        'x': [f'{day}' for day in range(1,32)],
+        'y': [ser.loc[day][0] if day <= len(ser.index) else 0 for day in range(1,32)]
         },
 
         {
         'type': 'bar', 'name': 'Přístupy',
-        'x': [f'{day}' for day in acc.index],
-        'y': [acc.loc[day][0] for day in acc.index]
+        'x': [f'{day}' for day in range(1,32)],
+        'y': [acc.loc[day][0] if day <= len(acc.index) else 0 for day in range(1,32)]
         },
 
         {
         'type': 'bar', 'name': 'Přihlášení',
-        'x': [f'{day}' for day in log.index],
-        'y': [log.loc[day][0] for day in log.index]
+        'x': [f'{day}' for day in range(1,32)],
+        'y': [log.loc[day][0] if day <= len(log.index) else 0 for day in range(1,32)]
         },
     ]
 
@@ -215,7 +236,7 @@ def update_figure_daily(year, month):
             xaxis={'linecolor': '2b3e50', 'tickmode': 'linear'},
             yaxis={'range': [0, 200]},
             #margin={'l': 50, 'b': 100, 't': 50, 'r': 50},
-            legend={'xanchor':'center', 'yanchor':'top', 'y':1.3, 'x':0.5 },
+            legend={'xanchor': 'center', 'yanchor': 'top', 'y': 1.3, 'x': 0.5 },
             transition={'duration': 500}, # ugly efect when rescaling axis
             height=600,
             plot_bgcolor='#2b3e50',
