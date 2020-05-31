@@ -64,7 +64,7 @@ search = {
 
 # DASH APP INIT
 css = [dbc.themes.SUPERHERO]
-meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}]
+meta_tags=[{"name": "viewport", "content": "width=device-width, user-scalable=no"}]
 app = dash.Dash(__name__, external_stylesheets=css, meta_tags=meta_tags)
 app.title = 'Statistiky | Městská knihovna Sušice'
 
@@ -82,6 +82,11 @@ ___
 
 ### Použití
 
+Několik poznámek pro uživatele mobilních zařízení:
+* Aplikace vypadá lépe při otočení na šířku
+* Na menších zařízeních se denní data zobrazují pouze pro prvních 10 dní, další dny se zobrazí posunutím nebo přeškálováním osy x
+(*viz sekce Denní data*)
+
 ##### Rok
 * Výběr roku ovlivní zobrazovaná data v záložce Vizualizece a tabulky v záložce Data
 
@@ -96,13 +101,13 @@ měsíci lze libovolně přepínat prostřednictvím posuvníku v dolní části
 
 ##### Denní data
 S grafem obsahujícím denní data se dá manipulovat (mimo jiné) následujícími způsoby:
-* Přihližování a oddalování kolečkem myši / prsty na telefonu
-* Posouvání os jejich držením táhnutím 
-* Přeškálování os dvojitým kliknutím na danou osu (*u osy y se hodí v případě, kdy data přesahují horní mez a nevejdou se do grafu*)
-* Přeškálování obou os dvojitým kliknutím kamkoliv do grafu (*v podstatě reset grafu*)
+* Přibližování a oddalování kolečkem myši nebo pomocí ikony v pravém horním rohu
+* Posouvání os jejich držením a táhnutím od středu
+* Přeškálování os dvojitým kliknutím na danou osu
+(*u osy y se hodí v případě, kdy data přesahují horní mez a nevejdou se do grafu*)
+* Přeškálování obou os dvojitým kliknutím kamkoliv do grafu
+(*v podstatě reset grafu*)
 * Manuální škálování os držením a táhnutím libovolného kraje dané osy
-
-Obvzláště na menších zařízeních je potřeba graf přiblížit a následně přeškálovat osu y, aby se data dala číst
 
 ##### Stažení grafu
 * Aktuální podobu obou grafů lze získat jako png obrázek. Po najetí na graf se možnost objeví v pravém horním rohu grafu v podobě ikony fotoaparátu
@@ -118,8 +123,10 @@ modal = html.Div([
     dbc.Modal([
             dbc.ModalHeader('Statistiky | Městská knihovna Sušice'),
             dbc.ModalBody(popup_message),
-            dbc.ModalFooter('Pro pokračování klepni mimo toto okno'),
-    ], is_open=True, size='xl')
+            dbc.ModalFooter(
+                dbc.Button("Zavřít", id="close", className="ml-auto")
+            ),
+    ], id="modal", is_open=True, size='lg')
 ])
 
 
@@ -135,7 +142,7 @@ tab_graph = html.Div([
                 config={
                     'displaylogo': False,
                     'modeBarButtonsToRemove': [
-                        'select2d', 'lasso2d', 'zoom2d','zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d',
+                        'select2d', 'lasso2d','zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d',
                         'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
                     ],
                     'scrollZoom': True
@@ -210,6 +217,9 @@ tab_data = html.Div([
 
 # LAYOUT DESCRIPTION
 app.layout = html.Div([
+    # STORES PAGE WIDTH
+    html.Div(id="size", style={'display': 'none'}), dcc.Location(id="url"),
+    # POPUP INFO
     modal,
     # YEAR PICKER
     dbc.FormGroup([
@@ -239,6 +249,26 @@ app.layout = html.Div([
 ##  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  #############  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  ##
 #############################################################################################################################################################
 
+# GET PAGE WIDTH
+app.clientside_callback(
+    """
+    function(largeValue1) {
+        return window.innerWidth
+    }
+    """,
+    Output('size', 'children'),
+    [Input('url', 'href')]
+)
+
+# POPUP CLOSE BUTTON
+@app.callback(
+    Output("modal", "is_open"),
+    [Input("close", "n_clicks")]
+)
+def toggle_modal(n):
+    return False if n else True
+
+
 # UPDATE SLIDER
 @app.callback(
     [Output('slider_month', 'marks'),
@@ -255,8 +285,9 @@ def update_slider(year):
 @app.callback(
     Output('graph_summary_daily', 'figure'),
     [Input('radio_year', 'value'),
-    Input('slider_month', 'value')])
-def update_figure_daily(year, month):
+    Input('slider_month', 'value'),
+    Input('size', 'children')])
+def update_figure_daily(year, month, width):
     # 13. month is data for whole year, which is not availible for concrete days
     # so we set month and year on January 2015 which is all zeroes
     if month == 13:
@@ -287,15 +318,18 @@ def update_figure_daily(year, month):
         },
     ]
 
+    graph_columns = 10 if int(width) < 1000 else 31
+    graph_height = 400 if int(width) < 1000 else 600
+
     return {
         'data': data,
         'layout': dict(
-            xaxis={'linecolor': '2b3e50', 'tickmode': 'linear'},
+            xaxis={'range': [0, graph_columns], 'linecolor': '2b3e50', 'tickmode': 'linear'},
             yaxis={'range': [0, 200]},
             #margin={'l': 50, 'b': 100, 't': 50, 'r': 50},
             legend={'xanchor': 'center', 'yanchor': 'top', 'y': 1.3, 'x': 0.5 },
             transition={'duration': 500}, # ugly efect when rescaling axis
-            height=600,
+            height=graph_height,
             plot_bgcolor='#2b3e50',
             paper_bgcolor='#2b3e50',
             font={'color': '#ffffff'},
@@ -308,8 +342,9 @@ def update_figure_daily(year, month):
 @app.callback(
     Output('graph_summary_monthly', 'figure'),
     [Input('radio_year', 'value'),
-    Input('slider_month', 'value')])
-def update_figure_monthly(year, month):
+    Input('slider_month', 'value'),
+    Input('size', 'children')])
+def update_figure_monthly(year, month, width):
     df = summary[year]
     filt = df.loc[months.inverse[month]]
 
@@ -350,6 +385,8 @@ def update_figure_monthly(year, month):
         max_range = max(filt[2], filt[5], filt[8])
         changed = True
 
+    graph_height = 400 if int(width) < 1000 else 600
+
     return {
         'data': data,
         'layout': dict(
@@ -358,7 +395,7 @@ def update_figure_monthly(year, month):
             margin={'l': 90},
             legend={'xanchor':'center', 'yanchor':'top', 'y':1.2, 'x':0.5 },
             transition={'duration': 0 if changed else 500}, # ugly efect when rescaling axis
-            height=600,
+            height=graph_height,
             plot_bgcolor='#2b3e50',
             paper_bgcolor='#2b3e50',
             font={'color': '#ffffff'},
