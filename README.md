@@ -4,7 +4,9 @@ Aplikace dynamicky a interaktivně vizualizuje [otevřená data Městské knihov
 
 Data k vizualizaci jsou pomocí skriptu parsována z webu knihovny a ukládána do csv souborů, které následně aplikace načítá a zpracovává
 
-## Použití
+Dostupné [online](https://statistiky-knihovna-susice.herokuapp.com/)
+
+## Pro vývojáře
 
 Veškeré části aplikace se spouští z **kořenového adresáře projektu**
 

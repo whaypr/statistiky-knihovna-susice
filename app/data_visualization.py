@@ -64,7 +64,8 @@ search = {
 
 # DASH APP INIT
 css = [dbc.themes.SUPERHERO]
-app = dash.Dash(__name__, external_stylesheets=css)
+meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}]
+app = dash.Dash(__name__, external_stylesheets=css, meta_tags=meta_tags)
 app.title = 'Statistiky | Městská knihovna Sušice'
 
 server = app.server # for gunicorn
@@ -76,31 +77,31 @@ server = app.server # for gunicorn
 # VISUALIZATION TAB
 tab_graph = html.Div([
     # GRAPHS
-    html.Div([
+    dbc.Row([
         # GRAPH SUMMARY DAILY
         html.Div([
             dcc.Markdown('#### Celková denní data', style={'textAlign': 'center'}),
             dcc.Graph(id='graph_summary_daily')
-        ], className='col-8'),
+        ], className='col-12 col-lg-8'),
         # GRAPH SUMMARY MONTHLY
         html.Div([
             dcc.Markdown('#### Celková měsíční data', style={'textAlign': 'center'}),
             dcc.Graph(id='graph_summary_monthly')
-        ], className='col-4')
-    ], className='row', style={'margin': '20px 0 0 0'}),
+        ], className='col-12 col-lg-4')
+    ], style={'margin': '20px auto auto auto'}),
 
     # RATING NUMBERS
     html.Div(id='rating'),
 
     # MONTH SLIDER
-    html.Div([
+    dbc.Container([
         dcc.Slider(
             id='slider_month',
             min=1,
             max=13,
             step=None,
         )
-    ], style={'margin': '30px 200px 0 200px'}),
+    ], style={'margin': '30px auto 0 auto'}),
 ])
 
 
@@ -381,4 +382,4 @@ def update_download_link_html(year, month):
 #############################################################################################################################################################
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
