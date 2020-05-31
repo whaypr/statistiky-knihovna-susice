@@ -74,6 +74,55 @@ server = app.server # for gunicorn
 ##  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ##
 #############################################################################################################################################################
 
+popup_message = dcc.Markdown(
+'''
+Vítej v aplikaci vizualizující [otevřená data Městské knihovny Sušice](https://susice.tritius.cz/statistics)
+
+___
+
+### Použití
+
+##### Rok
+* Výběr roku ovlivní zobrazovaná data v záložce Vizualizece a tabulky v záložce Data
+
+##### Záložky
+* V záložce Vizualizace jsou vizualizována knihovní data pomocí dvou grafů, pod kterými je množství udělených hodnocení za daný měsíc. Mezi dostupnými
+měsíci lze libovolně přepínat prostřednictvím posuvníku v dolní části
+* V záložce Data jsou k dispozici tabulky s aktuálně zobrazovanými měsíčními daty a daty hodnocení. Měsíční data jsou dostupná ke stažení
+
+##### Legenda grafu
+* Kliknutím na položku se položka skryje/objeví
+* Dvojitým kliknutím na položku se skryjí/objeví ostatní položky
+
+##### Denní data
+S grafem obsahujícím denní data se dá manipulovat (mimo jiné) následujícími způsoby:
+* Přihližování a oddalování kolečkem myši / prsty na telefonu
+* Posouvání os jejich držením táhnutím 
+* Přeškálování os dvojitým kliknutím na danou osu (*u osy y se hodí v případě, kdy data přesahují horní mez a nevejdou se do grafu*)
+* Přeškálování obou os dvojitým kliknutím kamkoliv do grafu (*v podstatě reset grafu*)
+* Manuální škálování os držením a táhnutím libovolného kraje dané osy
+
+Obvzláště na menších zařízeních je potřeba graf přiblížit a následně přeškálovat osu y, aby se data dala číst
+
+##### Stažení grafu
+* Aktuální podobu obou grafů lze získat jako png obrázek. Po najetí na graf se možnost objeví v pravém horním rohu grafu v podobě ikony fotoaparátu
+
+___
+
+Projekt je dostupný jako open-source na [GitHubu](https://github.com/b4lldr/statistiky-knihovna-susice#vizualizace-otev%C5%99en%C3%BDch-dat-m%C4%9Bstsk%C3%A9-knihovny-su%C5%A1ice)
+'''
+)
+
+# POPUP INFO
+modal = html.Div([
+    dbc.Modal([
+            dbc.ModalHeader('Statistiky | Městská knihovna Sušice'),
+            dbc.ModalBody(popup_message),
+            dbc.ModalFooter('Pro pokračování klepni mimo toto okno'),
+    ], is_open=True, size='xl')
+])
+
+
 # VISUALIZATION TAB
 tab_graph = html.Div([
     # GRAPHS
@@ -86,7 +135,7 @@ tab_graph = html.Div([
                 config={
                     'displaylogo': False,
                     'modeBarButtonsToRemove': [
-                        'pan2d', 'select2d', 'lasso2d', 'zoom2d','zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d',
+                        'select2d', 'lasso2d', 'zoom2d','zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d',
                         'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
                     ],
                     'scrollZoom': True
@@ -161,6 +210,7 @@ tab_data = html.Div([
 
 # LAYOUT DESCRIPTION
 app.layout = html.Div([
+    modal,
     # YEAR PICKER
     dbc.FormGroup([
         dbc.RadioItems(
@@ -196,7 +246,7 @@ app.layout = html.Div([
     [Input('radio_year', 'value')])
 def update_slider(year):
     return (
-        {months[month]: {'label': month[:3] if month != 'Souhrnně celkem' else month, 'style': {'color': '#ffffff', 'fontSize': '1.1em'}} for month in summary[year].index.unique()},
+        {months[month]: {'label': month[:3] if month != 'Souhrnně celkem' else month, 'style': {'color': '#ffffff', 'fontSize': '1.05em'}} for month in summary[year].index.unique()},
         months[summary[year].index.unique()[0]]
     )
 
@@ -249,6 +299,7 @@ def update_figure_daily(year, month):
             plot_bgcolor='#2b3e50',
             paper_bgcolor='#2b3e50',
             font={'color': '#ffffff'},
+            dragmode='orbit'
         )   
     }
 
@@ -311,6 +362,7 @@ def update_figure_monthly(year, month):
             plot_bgcolor='#2b3e50',
             paper_bgcolor='#2b3e50',
             font={'color': '#ffffff'},
+            dragmode=False
         )
     }
 
