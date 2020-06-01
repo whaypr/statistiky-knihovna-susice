@@ -92,7 +92,7 @@ Několik poznámek pro uživatele mobilních zařízení:
 
 ##### Záložky
 * V záložce Vizualizace jsou vizualizována knihovní data pomocí dvou grafů, pod kterými je množství udělených hodnocení za daný měsíc. Mezi dostupnými
-měsíci lze libovolně přepínat prostřednictvím posuvníku v dolní části
+měsíci lze libovolně přepínat prostřednictvím posuvníku v horní části
 * V záložce Data jsou k dispozici tabulky s aktuálně zobrazovanými měsíčními daty a daty hodnocení. Měsíční data jsou dostupná ke stažení
 
 ##### Legenda grafu
@@ -132,44 +132,6 @@ modal = html.Div([
 
 # VISUALIZATION TAB
 tab_graph = html.Div([
-    # GRAPHS
-    dbc.Row([
-        # GRAPH SUMMARY DAILY
-        html.Div([
-            dcc.Markdown('#### Celková denní data', style={'textAlign': 'center'}),
-            dcc.Graph(
-                id='graph_summary_daily',
-                config={
-                    'displaylogo': False,
-                    'modeBarButtonsToRemove': [
-                        'select2d', 'lasso2d','zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d',
-                        'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
-                    ],
-                    'scrollZoom': True
-                },
-            )
-        ], className='col-12 col-xl-8'),
-
-        # GRAPH SUMMARY MONTHLY
-        html.Div([
-            dcc.Markdown('#### Celková měsíční data', style={'textAlign': 'center'}),
-            dcc.Graph(
-                id='graph_summary_monthly',
-                config={
-                    'displaylogo': False,
-                    'modeBarButtonsToRemove': [
-                        'pan2d', 'select2d', 'lasso2d', 'zoom2d','zoomIn2d', 'zoomOut2d', 'resetScale2d',
-                        'autoScale2d', 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
-                    ],
-                }
-            )
-        ], className='col-12 col-xl-4')
-
-    ], style={'margin': '20px auto auto auto'}, no_gutters=True),
-
-    # RATING NUMBERS
-    html.Div(id='rating'),
-
     # MONTH SLIDER
     dbc.Container([
         dcc.Slider(
@@ -179,6 +141,58 @@ tab_graph = html.Div([
             step=None,
         )
     ], style={'margin': '30px auto 0 auto', 'font-size': '3em'}),
+    
+    # GRAPHS
+    dbc.Row([
+
+        # GRAPH SUMMARY DAILY
+        html.Div([
+            dbc.Card([
+                dbc.CardHeader([
+                    dcc.Markdown('#### Celková denní data', style={'textAlign': 'center'}),
+                ]),
+
+                dbc.CardBody([
+                    dcc.Graph(
+                        id='graph_summary_daily',
+                        config={
+                            'displaylogo': False,
+                            'modeBarButtonsToRemove': [
+                                'select2d', 'lasso2d','zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d',
+                                'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
+                            ],
+                            'scrollZoom': True
+                        },
+                    )
+                ])
+            ], style={'background-color': '#2b3e50', 'border-color': '#3b4c5d', 'border-width': '4px'} )
+        ], className='col-12 col-xl-8'),
+
+        # GRAPH SUMMARY MONTHLY
+        html.Div([
+            dbc.Card([
+                dbc.CardHeader([
+                    dcc.Markdown('#### Celková měsíční data', style={'textAlign': 'center'}),
+                ]),
+
+                dbc.CardBody([
+                    dcc.Graph(
+                        id='graph_summary_monthly',
+                        config={
+                            'displaylogo': False,
+                            'modeBarButtonsToRemove': [
+                                'pan2d', 'select2d', 'lasso2d', 'zoom2d','zoomIn2d', 'zoomOut2d', 'resetScale2d',
+                                'autoScale2d', 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
+                            ],
+                        }
+                    )
+                ])
+            ], style={'background-color': '#2b3e50', 'border-color': '#3b4c5d', 'border-width': '4px'})
+        ], className='col-12 col-xl-4')
+    ], style={'margin': '20px auto'}),
+
+    # RATING NUMBERS
+    html.Div(id='rating'),
 ])
 
 
@@ -237,7 +251,7 @@ app.layout = html.Div([
             inline=True,
             id='radio_year',
         ),
-    ], style={'margin': '20px 0 0 0', 'textAlign': 'center'}),
+    ], style={'margin': '25px 0', 'textAlign': 'center'}),
     # TABS
     dbc.Tabs([
         dbc.Tab(tab_graph, label='Vizualizace', tab_style={'width': '200px', 'textAlign': 'center', 'margin': 'auto'}, label_style={'color': '#37b800'}),
@@ -276,7 +290,15 @@ def toggle_modal(n):
     [Input('radio_year', 'value')])
 def update_slider(year):
     return (
-        {months[month]: {'label': month[:3] if month != 'Souhrnně celkem' else month, 'style': {'color': '#ffffff', 'fontSize': '1.05em'}} for month in summary[year].index.unique()},
+        {
+            months[month]: 
+            {
+                'label': month[:3] if month != 'Souhrnně celkem' else month,
+                'style': {'color': '#ffffff' if month != 'Souhrnně celkem' else '#ff7f0e', 'fontSize': '1.05em'}
+            }
+            for month in summary[year].index.unique()
+        },
+
         months[summary[year].index.unique()[0]]
     )
 
@@ -326,7 +348,7 @@ def update_figure_daily(year, month, width):
         'layout': dict(
             xaxis={'range': [0, graph_columns], 'linecolor': '2b3e50', 'tickmode': 'linear'},
             yaxis={'range': [0, 200]},
-            #margin={'l': 50, 'b': 100, 't': 50, 'r': 50},
+            margin={'l': 20, 'b': 20, 't': 0, 'r': 10, 'pad': 0},
             legend={'xanchor': 'center', 'yanchor': 'top', 'y': 1.3, 'x': 0.5 },
             transition={'duration': 500}, # ugly efect when rescaling axis
             height=graph_height,
@@ -392,7 +414,7 @@ def update_figure_monthly(year, month, width):
         'layout': dict(
             yaxis={'linecolor': '2b3e50'},
             xaxis={'range': [0, max_range]},
-            margin={'l': 90},
+            margin={'l': 100, 'b': 0, 't': 0, 'r': 0, 'pad': 0},
             legend={'xanchor':'center', 'yanchor':'top', 'y':1.2, 'x':0.5 },
             transition={'duration': 0 if changed else 500}, # ugly efect when rescaling axis
             height=graph_height,
