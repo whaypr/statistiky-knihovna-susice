@@ -3,6 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+import dash_daq as daq
 
 import pandas as pd
 
@@ -32,6 +33,7 @@ months = bidict({
 
 init_year = 2020
 
+width_breakpoint = 1000
 
 # GLOBAL DATA
 # monthly
@@ -140,7 +142,7 @@ tab_graph = html.Div([
             max=13,
             step=None,
         )
-    ], style={'margin': '30px auto 0 auto', 'font-size': '3em'}),
+    ], style={'margin': '30px auto'}),
     
     # GRAPHS
     dbc.Row([
@@ -287,14 +289,18 @@ def toggle_modal(n):
 @app.callback(
     [Output('slider_month', 'marks'),
     Output('slider_month', 'value')],
-    [Input('radio_year', 'value')])
-def update_slider(year):
+    [Input('radio_year', 'value'),
+    Input('size', 'children')])
+def update_slider(year, width):
+    month_slice = slice(0, 3) if int(width) < width_breakpoint else slice(0, None)
+    rotation = 'translateX(-25px) translateY(10px) rotate(-45deg)' if int(width) < width_breakpoint else 'rotate(0deg) translateX(-15px)'
+
     return (
         {
             months[month]: 
             {
-                'label': month[:3] if month != 'Souhrnně celkem' else month,
-                'style': {'color': '#ffffff' if month != 'Souhrnně celkem' else '#ff7f0e', 'fontSize': '1.05em'}
+                'label': month[month_slice] if month != 'Souhrnně celkem' else 'Souhrnně',
+                'style': {'color': '#ffffff' if month != 'Souhrnně celkem' else '#2ca02c', 'fontSize': '1.15em', 'transform': rotation}
             }
             for month in summary[year].index.unique()
         },
@@ -340,8 +346,8 @@ def update_figure_daily(year, month, width):
         },
     ]
 
-    graph_columns = 10 if int(width) < 1000 else 31
-    graph_height = 400 if int(width) < 1000 else 600
+    graph_columns = 10 if int(width) < width_breakpoint else 31
+    graph_height = 400 if int(width) < width_breakpoint else 600
 
     return {
         'data': data,
@@ -407,15 +413,15 @@ def update_figure_monthly(year, month, width):
         max_range = max(filt[2], filt[5], filt[8])
         changed = True
 
-    graph_height = 400 if int(width) < 1000 else 600
+    graph_height = 400 if int(width) < width_breakpoint else 600
 
     return {
         'data': data,
         'layout': dict(
             yaxis={'linecolor': '2b3e50'},
             xaxis={'range': [0, max_range]},
-            margin={'l': 100, 'b': 0, 't': 0, 'r': 0, 'pad': 0},
-            legend={'xanchor':'center', 'yanchor':'top', 'y':1.2, 'x':0.5 },
+            margin={'l': 85, 'b': 0, 't': 0, 'r': 0, 'pad': 0},
+            legend={'xanchor':'center', 'yanchor':'top', 'y':1.2, 'x':0.25 },
             transition={'duration': 0 if changed else 500}, # ugly efect when rescaling axis
             height=graph_height,
             plot_bgcolor='#2b3e50',

@@ -1,0 +1,20 @@
+.rc-slider-handle,
+.rc-slider-handle:focus,
+.rc-slider-handle-click-focused,
+.rc-slider-handle-click-focused:focus
+{
+    background-color: #ff7f0e;
+    border-color: #ff7f0e;
+}
+
+.rc-slider-dot,
+.rc-slider-dot-active
+{
+    background-color: white;
+    border-color: white;
+}
+
+.rc-slider-step
+{
+    background-color: #3b4c5d;
+}
