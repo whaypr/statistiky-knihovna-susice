@@ -13,7 +13,7 @@ import dash_bootstrap_components as dbc
 
 import pandas as pd
 
-from data_parsing import update_data
+from app.data_parsing import update_data
 
 
 # CONFIG AND HELPER VARIABLES
