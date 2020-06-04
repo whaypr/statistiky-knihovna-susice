@@ -1,3 +1,7 @@
+import os
+import urllib
+from bidict import bidict
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -6,9 +10,7 @@ import dash_bootstrap_components as dbc
 
 import pandas as pd
 
-import os
-from bidict import bidict
-import urllib
+import data_parsing
 
 
 # CONFIG AND HELPER VARIABLES
@@ -34,7 +36,13 @@ init_year = 2020
 
 width_breakpoint = 1000
 
-# GLOBAL DATA
+popup_message_path = os.path.join('app', 'assets', 'popup_message.md')
+with open(popup_message_path) as f:
+    popup_message = f.read()
+
+
+# DATA
+
 # monthly
 summary = {
     year: pd.read_csv(os.path.join('data', 'months', f'summary_{year}.csv'), header=[0,1], index_col=0)
@@ -65,7 +73,15 @@ search = {
 
 # DASH APP INIT
 css = [dbc.themes.SUPERHERO]
-meta_tags=[{"name": "viewport", "content": "width=device-width, user-scalable=no"}]
+meta_tags=[
+    {'name': 'viewport', 'content': 'width=device-width, user-scalable=no'},
+
+    {'property': 'og:image', 'content': os.path.join('app', 'assets', 'thumbnail.png')},
+    {'property': 'og:image:type', 'content': 'image/png'},
+    {'property': 'og:image:width', 'content': '1920'},
+    {'property': 'og:image:height', 'content': '920'}
+]
+
 app = dash.Dash(__name__, external_stylesheets=css, meta_tags=meta_tags)
 app.title = 'Statistiky | Městská knihovna Sušice'
 
@@ -75,60 +91,42 @@ server = app.server # for gunicorn
 ##  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ##
 #############################################################################################################################################################
 
-popup_message = dcc.Markdown(
-'''
-Vítej v aplikaci vizualizující [otevřená data Městské knihovny Sušice](https://susice.tritius.cz/statistics)
-
-___
-
-### Použití
-
-Několik poznámek pro uživatele mobilních zařízení:
-* Aplikace vypadá lépe při otočení na šířku
-* Na menších zařízeních se denní data zobrazují pouze pro prvních 10 dní, další dny se zobrazí posunutím nebo přeškálováním osy x
-(*viz sekce Denní data*)
-
-##### Rok
-* Výběr roku ovlivní zobrazovaná data v záložce Vizualizece a tabulky v záložce Data
-
-##### Záložky
-* V záložce Vizualizace jsou vizualizována knihovní data pomocí dvou grafů, pod kterými je množství udělených hodnocení za daný měsíc. Mezi dostupnými
-měsíci lze libovolně přepínat prostřednictvím posuvníku v horní části
-* V záložce Data jsou k dispozici tabulky s aktuálně zobrazovanými měsíčními daty a daty hodnocení. Měsíční data jsou dostupná ke stažení
-
-##### Legenda grafu
-* Kliknutím na položku se položka skryje/objeví
-* Dvojitým kliknutím na položku se skryjí/objeví ostatní položky
-
-##### Denní data
-S grafem obsahujícím denní data se dá manipulovat (mimo jiné) následujícími způsoby:
-* Přibližování a oddalování kolečkem myši nebo pomocí ikony v pravém horním rohu
-* Posouvání os jejich držením a táhnutím od středu
-* Přeškálování os dvojitým kliknutím na danou osu
-(*u osy y se hodí v případě, kdy data přesahují horní mez a nevejdou se do grafu*)
-* Přeškálování obou os dvojitým kliknutím kamkoliv do grafu
-(*v podstatě reset grafu*)
-* Manuální škálování os držením a táhnutím libovolného kraje dané osy
-
-##### Stažení grafu
-* Aktuální podobu obou grafů lze získat jako png obrázek. Po najetí na graf se možnost objeví v pravém horním rohu grafu v podobě ikony fotoaparátu
-
-___
-
-Projekt je dostupný jako open-source na [GitHubu](https://github.com/b4lldr/statistiky-knihovna-susice#vizualizace-otev%C5%99en%C3%BDch-dat-m%C4%9Bstsk%C3%A9-knihovny-su%C5%A1ice)
-'''
+# AUTOMATIC DATA UPDATE
+data_update = dcc.Interval(
+    id='interval',
+    interval=1000 * 60 * 60, # in milliseconds
+    n_intervals=0
 )
+
 
 # POPUP INFO
 modal = html.Div([
     dbc.Modal([
-            dbc.ModalHeader('Statistiky | Městská knihovna Sušice'),
-            dbc.ModalBody(popup_message),
+            dbc.ModalBody(dcc.Markdown(popup_message)),
             dbc.ModalFooter(
-                dbc.Button("Zavřít", id="close", className="ml-auto")
+                dbc.Button('Zavřít', id='close', className='ml-auto')
             ),
-    ], id="modal", is_open=True, size='lg')
+    ], id='modal', is_open=True, size='lg')
 ])
+
+
+# YEAR PICKER
+year_picker = dbc.FormGroup([
+    dbc.RadioItems(
+        options=[
+            {'label': '2015', 'value': 2015},
+            {'label': '2016', 'value': 2016},
+            {'label': '2017', 'value': 2017},
+            {'label': '2018', 'value': 2018},
+            {'label': '2019', 'value': 2019},
+            {'label': '2020', 'value': 2020}
+        ],
+        value=init_year,
+        switch=True,
+        inline=True,
+        id='radio_year',
+    ),
+], style={'margin': '25px 0', 'textAlign': 'center'})
 
 
 # VISUALIZATION TAB
@@ -145,7 +143,6 @@ tab_graph = html.Div([
     
     # GRAPHS
     dbc.Row([
-
         # GRAPH SUMMARY DAILY
         html.Div([
             dbc.Card([
@@ -162,7 +159,6 @@ tab_graph = html.Div([
                                 'select2d', 'lasso2d','zoomIn2d', 'zoomOut2d', 'resetScale2d', 'autoScale2d',
                                 'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
                             ],
-                            'scrollZoom': True
                         },
                     )
                 ])
@@ -224,7 +220,7 @@ tab_data = html.Div([
     # TABLE SUMMARY
     html.Div(id='table_summary'),
 
-    # TABLE RATINGS
+    # TITLE AND TABLE RATINGS
     dcc.Markdown('''### HODNOCENÍ''', style={'text-align': 'center', 'margin': '25px'}),
     html.Div(id='table_rating'),
 ])
@@ -233,26 +229,13 @@ tab_data = html.Div([
 # LAYOUT DESCRIPTION
 app.layout = html.Div([
     # STORES PAGE WIDTH
-    html.Div(id="size", style={'display': 'none'}), dcc.Location(id="url"),
+    html.Div(id='size', style={'display': 'none'}), dcc.Location(id='url'),
+    # INTERVAL FOR AUTOMATIC DATA UPDATE
+    data_update, html.Div(id='dummy', style={'display': 'none'}),
     # POPUP INFO
     modal,
     # YEAR PICKER
-    dbc.FormGroup([
-        dbc.RadioItems(
-            options=[
-                {'label': '2015', 'value': 2015},
-                {'label': '2016', 'value': 2016},
-                {'label': '2017', 'value': 2017},
-                {'label': '2018', 'value': 2018},
-                {'label': '2019', 'value': 2019},
-                {'label': '2020', 'value': 2020}
-            ],
-            value=init_year,
-            switch=True,
-            inline=True,
-            id='radio_year',
-        ),
-    ], style={'margin': '25px 0', 'textAlign': 'center'}),
+    year_picker,
     # TABS
     dbc.Tabs([
         dbc.Tab(tab_graph, label='Vizualizace', tab_style={'width': '200px', 'textAlign': 'center', 'margin': 'auto'}, label_style={'color': '#37b800'}),
@@ -266,19 +249,40 @@ app.layout = html.Div([
 
 # GET PAGE WIDTH
 app.clientside_callback(
-    """
+    '''
     function(largeValue1) {
         return window.innerWidth
     }
-    """,
+    ''',
     Output('size', 'children'),
     [Input('url', 'href')]
 )
 
+
+@app.callback(Output('dummy', 'children'),
+              [Input('interval', 'n_intervals')])
+def update_data(n):
+    url = 'https://susice.tritius.cz/statistics'
+    topics_days = ['access', 'login', 'search']
+    topics_months = ['rating', 'summary']
+    year = 2020
+    month = 6
+
+    data_parsing.update_data(url, topics_days, topics_months, year, month)
+
+    # monthly
+    summary[2020] = pd.read_csv(os.path.join('data', 'months', f'summary_{year}.csv'), header=[0,1], index_col=0)
+    rating[2020] = pd.read_csv(os.path.join('data', 'months', f'rating_{year}.csv'), header=[0,1], index_col=0)
+    # daily
+    access[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'access_{year}_{month}.csv'), index_col=0)
+    login[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'login_{year}_{month}.csv'), index_col=0)
+    search[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'search_{year}_{month}.csv'), index_col=0)
+
+
 # POPUP CLOSE BUTTON
 @app.callback(
-    Output("modal", "is_open"),
-    [Input("close", "n_clicks")]
+    Output('modal', 'is_open'),
+    [Input('close', 'n_clicks')]
 )
 def toggle_modal(n):
     return False if n else True
@@ -360,7 +364,7 @@ def update_figure_daily(year, month, width):
             plot_bgcolor='#2b3e50',
             paper_bgcolor='#2b3e50',
             font={'color': '#ffffff'},
-            dragmode='orbit'
+            dragmode='orbit',
         )   
     }
 
@@ -436,7 +440,7 @@ def update_figure_monthly(year, month, width):
     [Output('table_summary', 'children'),
     Output('table_rating', 'children')],
     [Input('radio_year', 'value')])
-def update_data(year):
+def update_tables(year):
     table_summary = dbc.Table.from_dataframe(summary[year], striped=True, borderless=True, index=True, responsive=True)
     table_rating = dbc.Table.from_dataframe(rating[year], striped=True, borderless=True, index=True, responsive=True)
 

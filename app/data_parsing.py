@@ -24,10 +24,10 @@ def get_dataframes_months(url, topics, years):
     return dataframes_months
 
 
-def get_dataframes_days(url, topics, years):
+def get_dataframes_days(url, topics, years, months):
     # get links to subsites with days data for given topics and years
     # includes links to nonexisting data -> resulting dataframes are filled with zeroes
-    links = [f'{url}/{topic}/{year}/{month}' for topic in topics for year in years for month in range(1,13)]
+    links = [f'{url}/{topic}/{year}/{month}' for topic in topics for year in years for month in months]
 
     # loop through all links and parse data from them into dataframes
     dataframes_days = []
@@ -72,7 +72,7 @@ def save_months_to_csv(dataframes, subfolder, topics, years):
             i += 1
 
 
-def save_days_to_csv(dataframes, subfolder, topics, years):
+def save_days_to_csv(dataframes, subfolder, topics, years, months):
     # create file structure if not exists
     paths = [os.path.join('data', subfolder, str(year)) for year in years]
     for path in paths:
@@ -82,13 +82,25 @@ def save_days_to_csv(dataframes, subfolder, topics, years):
     i = 0
     for topic in topics:
         for year in years:
-            for month in range(1,13):
+            for month in months:
                 path = os.path.join('data', subfolder, str(year), f'{topic}_{year}_{month}.csv')
                 dataframes[i].to_csv(path)
                 i += 1
 
 
-# parse data only when called as script
+def update_data(url, topics_days, topics_months, year, month):
+    dataframes_days = get_dataframes_days(url, topics_days, [year], [month])
+    save_days_to_csv(dataframes_days, 'days/', topics_days, [year], [month])
+
+    dataframes_months = get_dataframes_months(url, topics_months, [year])
+    save_months_to_csv(dataframes_months, 'months', topics_months, [year])
+
+
+####################################################################################################
+####################################################################################################
+
+
+# parse whole data only when called as script
 if __name__ == "__main__":
     '''
     all availible topics are: access, login, rating, search, summary
@@ -99,10 +111,11 @@ if __name__ == "__main__":
     url = 'https://susice.tritius.cz/statistics'
     years = [i for i in range(2015, 2021)]
 
-    topics = ['rating', 'summary']
-    dataframes_months = get_dataframes_months(url, topics, years)
-    save_months_to_csv(dataframes_months, 'months', topics, years)
+    topics_months = ['rating', 'summary']
+    dataframes_months = get_dataframes_months(url, topics_months, years)
+    save_months_to_csv(dataframes_months, 'months', topics_months, years)
 
-    topics = ['access', 'login', 'search']
-    dataframes_days = get_dataframes_days(url, topics, years)
-    save_days_to_csv(dataframes_days, 'days/', topics, years)
+    months = range(1,13)
+    topics_days = ['access', 'login', 'search']
+    dataframes_days = get_dataframes_days(url, topics_days, years, months)
+    save_days_to_csv(dataframes_days, 'days/', topics_days, years, months)
