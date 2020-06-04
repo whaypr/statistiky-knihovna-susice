@@ -3,6 +3,7 @@ import urllib
 from bidict import bidict
 
 import time
+import datetime
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 import dash
@@ -80,8 +81,10 @@ def update_library_data():
         url = 'https://susice.tritius.cz/statistics'
         topics_days = ['access', 'login', 'search']
         topics_months = ['rating', 'summary']
-        year = 2020
-        month = 6
+
+        date = datetime.datetime.now()
+        year = date.year
+        month = date.month
 
         update_data(url, topics_days, topics_months, year, month)
 
@@ -101,7 +104,7 @@ css = [dbc.themes.SUPERHERO]
 meta_tags=[
     {'name': 'viewport', 'content': 'width=device-width, user-scalable=no'},
 
-    {'property': 'og:image', 'content': os.path.join('app', 'assets', 'thumbnail.png')},
+    {'property': 'og:image', 'content': 'https://statistiky-knihovna-susice.herokuapp.com/assets/thumbnail.png'},
     {'property': 'og:image:type', 'content': 'image/png'},
     {'property': 'og:image:width', 'content': '1920'},
     {'property': 'og:image:height', 'content': '920'}
