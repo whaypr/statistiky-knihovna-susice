@@ -1,1 +1,1 @@
-web: gunicorn app.data_visualization:server
+web: gunicorn app.data_visualization:server --workers 4

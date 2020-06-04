@@ -2,6 +2,9 @@ import os
 import urllib
 from bidict import bidict
 
+import time
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -10,7 +13,7 @@ import dash_bootstrap_components as dbc
 
 import pandas as pd
 
-import data_parsing
+from data_parsing import update_data
 
 
 # CONFIG AND HELPER VARIABLES
@@ -71,6 +74,28 @@ search = {
 }
 
 
+# PERIODIC DATA UPDATE
+def update_library_data():
+    while True:
+        url = 'https://susice.tritius.cz/statistics'
+        topics_days = ['access', 'login', 'search']
+        topics_months = ['rating', 'summary']
+        year = 2020
+        month = 6
+
+        update_data(url, topics_days, topics_months, year, month)
+
+        # monthly data update
+        summary[2020] = pd.read_csv(os.path.join('data', 'months', f'summary_{year}.csv'), header=[0,1], index_col=0)
+        rating[2020] = pd.read_csv(os.path.join('data', 'months', f'rating_{year}.csv'), header=[0,1], index_col=0)
+        # daily data update
+        access[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'access_{year}_{month}.csv'), index_col=0)
+        login[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'login_{year}_{month}.csv'), index_col=0)
+        search[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'search_{year}_{month}.csv'), index_col=0)
+
+        time.sleep(60 * 60) # in seconds
+
+
 # DASH APP INIT
 css = [dbc.themes.SUPERHERO]
 meta_tags=[
@@ -90,14 +115,6 @@ server = app.server # for gunicorn
 #############################################################################################################################################################
 ##  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ##
 #############################################################################################################################################################
-
-# AUTOMATIC DATA UPDATE
-data_update = dcc.Interval(
-    id='interval',
-    interval=1000 * 60 * 60, # in milliseconds
-    n_intervals=0
-)
-
 
 # POPUP INFO
 modal = html.Div([
@@ -227,25 +244,32 @@ tab_data = html.Div([
 
 
 # LAYOUT DESCRIPTION
-app.layout = html.Div([
-    # STORES PAGE WIDTH
-    html.Div(id='size', style={'display': 'none'}), dcc.Location(id='url'),
-    # INTERVAL FOR AUTOMATIC DATA UPDATE
-    data_update, html.Div(id='dummy', style={'display': 'none'}),
-    # POPUP INFO
-    modal,
-    # YEAR PICKER
-    year_picker,
-    # TABS
-    dbc.Tabs([
-        dbc.Tab(tab_graph, label='Vizualizace', tab_style={'width': '200px', 'textAlign': 'center', 'margin': 'auto'}, label_style={'color': '#37b800'}),
-        dbc.Tab(tab_data, label='Data', tab_style={'width': '200px', 'textAlign': 'center', 'margin': 'auto'}, label_style={'color': '#00AEF9'}),
-    ]),
-])
+def make_layout():
+    return html.Div([
+        # STORES PAGE WIDTH
+        html.Div(id='size', style={'display': 'none'}), dcc.Location(id='url'),
+        # POPUP INFO
+        modal,
+        # YEAR PICKER
+        year_picker,
+        # TABS
+        dbc.Tabs([
+            dbc.Tab(tab_graph, label='Vizualizace', tab_style={'width': '200px', 'textAlign': 'center', 'margin': 'auto'}, label_style={'color': '#37b800'}),
+            dbc.Tab(tab_data, label='Data', tab_style={'width': '200px', 'textAlign': 'center', 'margin': 'auto'}, label_style={'color': '#00AEF9'}),
+        ]),
+    ])
+
+
+app.layout = make_layout
 
 #############################################################################################################################################################
 ##  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  #############  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  ##
 #############################################################################################################################################################
+
+# RUN DATA UPDATE FUNC IN ANOTHER THREAD 
+executor = ThreadPoolExecutor(max_workers=1)
+executor.submit(update_library_data)
+
 
 # GET PAGE WIDTH
 app.clientside_callback(
@@ -257,26 +281,6 @@ app.clientside_callback(
     Output('size', 'children'),
     [Input('url', 'href')]
 )
-
-
-@app.callback(Output('dummy', 'children'),
-              [Input('interval', 'n_intervals')])
-def update_data(n):
-    url = 'https://susice.tritius.cz/statistics'
-    topics_days = ['access', 'login', 'search']
-    topics_months = ['rating', 'summary']
-    year = 2020
-    month = 6
-
-    data_parsing.update_data(url, topics_days, topics_months, year, month)
-
-    # monthly
-    summary[2020] = pd.read_csv(os.path.join('data', 'months', f'summary_{year}.csv'), header=[0,1], index_col=0)
-    rating[2020] = pd.read_csv(os.path.join('data', 'months', f'rating_{year}.csv'), header=[0,1], index_col=0)
-    # daily
-    access[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'access_{year}_{month}.csv'), index_col=0)
-    login[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'login_{year}_{month}.csv'), index_col=0)
-    search[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'search_{year}_{month}.csv'), index_col=0)
 
 
 # POPUP CLOSE BUTTON
