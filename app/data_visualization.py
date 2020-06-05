@@ -14,7 +14,10 @@ import dash_bootstrap_components as dbc
 
 import pandas as pd
 
-from app.data_parsing import update_data
+try:
+    from app.data_parsing import update_data # in heroku
+except:
+    from data_parsing import update_data # locally
 
 
 # CONFIG AND HELPER VARIABLES
@@ -97,23 +100,6 @@ def update_library_data():
         search[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'search_{year}_{month}.csv'), index_col=0)
 
         time.sleep(60 * 60) # in seconds
-
-
-# DASH APP INIT
-css = [dbc.themes.SUPERHERO]
-meta_tags=[
-    {'name': 'viewport', 'content': 'width=device-width, user-scalable=no'},
-
-    {'property': 'og:image', 'content': 'https://statistiky-knihovna-susice.herokuapp.com/assets/thumbnail.png'},
-    {'property': 'og:image:type', 'content': 'image/png'},
-    {'property': 'og:image:width', 'content': '1920'},
-    {'property': 'og:image:height', 'content': '920'}
-]
-
-app = dash.Dash(__name__, external_stylesheets=css, meta_tags=meta_tags)
-app.title = 'Statistiky | Městská knihovna Sušice'
-
-server = app.server # for gunicorn
 
 #############################################################################################################################################################
 ##  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ########  L A Y O U T  ##
@@ -262,17 +248,35 @@ def make_layout():
         ]),
     ])
 
+#############################################################################################################################################################
+##  A P P  ####################  A P P  ####################  A P P  ###################  A P P  ####################  A P P  ####################  A P P  ##
+#############################################################################################################################################################
 
+# DASH APP INIT
+css = [dbc.themes.SUPERHERO]
+meta_tags=[
+    {'name': 'viewport', 'content': 'width=device-width, user-scalable=no'},
+
+    {'property': 'og:image', 'content': 'https://statistiky-knihovna-susice.herokuapp.com/assets/thumbnail.png'},
+    {'property': 'og:image:type', 'content': 'image/png'},
+    {'property': 'og:image:width', 'content': '1920'},
+    {'property': 'og:image:height', 'content': '920'}
+]
+
+app = dash.Dash(__name__, external_stylesheets=css, meta_tags=meta_tags)
+
+app.title = 'Statistiky | Městská knihovna Sušice'
 app.layout = make_layout
 
-#############################################################################################################################################################
-##  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  #############  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  ##
-#############################################################################################################################################################
+server = app.server # for gunicorn
 
 # RUN DATA UPDATE FUNC IN ANOTHER THREAD 
 executor = ThreadPoolExecutor(max_workers=1)
 executor.submit(update_library_data)
 
+#############################################################################################################################################################
+##  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  #############  I N T E R A C T I V I T Y  ############  I N T E R A C T I V I T Y  ##
+#############################################################################################################################################################
 
 # GET PAGE WIDTH
 app.clientside_callback(
