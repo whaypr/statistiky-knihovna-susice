@@ -368,7 +368,7 @@ def update_figure_daily(year, month, width):
         'layout': dict(
             xaxis={'range': [0, graph_columns], 'linecolor': '2b3e50', 'tickmode': 'linear'},
             yaxis={'range': [0, 200]},
-            margin={'l': 20, 'b': 20, 't': 0, 'r': 10, 'pad': 0},
+            margin={'l': 30, 'b': 25, 't': 0, 'r': 10, 'pad': 0},
             legend={'xanchor': 'center', 'yanchor': 'top', 'y': 1.3, 'x': 0.5 },
             transition={'duration': 500}, # ugly efect when rescaling axis
             height=graph_height,
@@ -424,7 +424,7 @@ def update_figure_monthly(year, month, width):
     max_range = 4500
     changed = False
     if filt[2] > max_range or filt[5] > max_range or filt[8] > max_range:
-        max_range = max(filt[2], filt[5], filt[8])
+        max_range = max(filt[2], filt[5], filt[8]) * 1.1 # 1.1 for labels to be visible
         changed = True
 
     graph_height = 400 if int(width) < width_breakpoint else 600
