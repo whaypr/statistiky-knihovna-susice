@@ -39,13 +39,17 @@ months = bidict({
     'Souhrnně celkem': 13
 })
 
-init_year = 2020
+init_year = datetime.datetime.now().year
 
 width_breakpoint = 1000
 
 popup_message_path = os.path.join('app', 'assets', 'popup_message.md')
 with open(popup_message_path) as f:
     popup_message = f.read()
+
+data_url = 'https://susice.tritius.cz/statistics'
+topics_days = ['access', 'login', 'search']
+topics_months = ['rating', 'summary']
 
 
 # DATA
@@ -81,19 +85,15 @@ search = {
 # PERIODIC DATA UPDATE
 def update_library_data():
     while True:
-        url = 'https://susice.tritius.cz/statistics'
-        topics_days = ['access', 'login', 'search']
-        topics_months = ['rating', 'summary']
-
         date = datetime.datetime.now()
         year = date.year
         month = date.month
 
-        update_data(url, topics_days, topics_months, year, month)
+        update_data(data_url, topics_days, topics_months, year, month)
 
         # monthly data update
-        summary[2020] = pd.read_csv(os.path.join('data', 'months', f'summary_{year}.csv'), header=[0,1], index_col=0)
-        rating[2020] = pd.read_csv(os.path.join('data', 'months', f'rating_{year}.csv'), header=[0,1], index_col=0)
+        summary[year] = pd.read_csv(os.path.join('data', 'months', f'summary_{year}.csv'), header=[0,1], index_col=0)
+        rating[year] = pd.read_csv(os.path.join('data', 'months', f'rating_{year}.csv'), header=[0,1], index_col=0)
         # daily data update
         access[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'access_{year}_{month}.csv'), index_col=0)
         login[f'{year}:{month}'] = pd.read_csv(os.path.join('data', 'days', f'{year}', f'login_{year}_{month}.csv'), index_col=0)
@@ -120,12 +120,8 @@ modal = html.Div([
 year_picker = dbc.FormGroup([
     dbc.RadioItems(
         options=[
-            {'label': '2015', 'value': 2015},
-            {'label': '2016', 'value': 2016},
-            {'label': '2017', 'value': 2017},
-            {'label': '2018', 'value': 2018},
-            {'label': '2019', 'value': 2019},
-            {'label': '2020', 'value': 2020}
+            {'label': f'{year}', 'value': year}
+            for year in range(2015, init_year + 1)
         ],
         value=init_year,
         switch=True,
