@@ -4,7 +4,7 @@ from pandas.testing import assert_frame_equal
 import os
 import pandas as pd
 
-import app.data_parsing as datpar
+import app.parsing as datpar
 
 
 ### PARSED DATA TESTING

@@ -4,7 +4,7 @@ Aplikace dynamicky a interaktivně vizualizuje [otevřená data Městské knihov
 
 Data k vizualizaci jsou skriptem parsována z webu knihovny a ukládána do csv souborů, které aplikace načítá a zpracovává
 
-Dostupné [online](https://statistiky-knihovna-susice.herokuapp.com/)
+Dostupné [online](http://whaypr.ml:50)
 
 ## Pro vývojáře
 
@@ -12,7 +12,7 @@ Veškeré části aplikace se spouští z **kořenového adresáře projektu**
 
 Vygenerování dat:
 ```
-$ python app/data_parsing.py
+$ python app/parsing.py
 ```
 * V místě zavolání skriptu vytvoří adresářovou strukturu a naplní ji daty v csv formátu
 * Skript lze zavolat z jakéhokoliv adresáře, ale data pro aplikaci je nutné vytvořit v **kořenovém adresáři projektu**
@@ -22,7 +22,7 @@ $ python app/data_parsing.py
 
 Spuštění aplikace:
 ```
-$ python app/data_visualization.py
+$ python3 app/visualization
 ```
 * Spustí Flask server s aplikací
 * Dostupný lokálně na adrese [127.0.0.1:8050](http://127.0.0.1:8050/)
