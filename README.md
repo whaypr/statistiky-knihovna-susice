@@ -1,12 +1,14 @@
 # Vizualizace otevřených dat Městské knihovny Sušice
 
+<img src="image.png" alt="app interface">
+
 Aplikace dynamicky a interaktivně vizualizuje [otevřená data Městské knihovny Sušice](https://susice.tritius.cz/statistics)
 
 Data k vizualizaci jsou skriptem parsována z webu knihovny a ukládána do csv souborů, které aplikace načítá a zpracovává
 
 Dostupné [online](http://whaypr.ml:50)
 
-## Pro vývojáře
+## Jak spustit
 
 Veškeré části aplikace se spouští z **kořenového adresáře projektu**
 
