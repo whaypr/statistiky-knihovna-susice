@@ -39,7 +39,7 @@ months = bidict({
     'Souhrnně celkem': 13
 })
 
-init_year = datetime.datetime.now().year
+init_year = 2020 # datetime.datetime.now().year
 
 width_breakpoint = 1000
 
@@ -85,9 +85,9 @@ search = {
 # PERIODIC DATA UPDATE
 def update_library_data():
     while True:
-        date = datetime.datetime.now()
-        year = date.year
-        month = date.month
+        # date = datetime.datetime.now()
+        year = 2020 # date.year
+        month = 1 # date.month
 
         update_data(data_url, topics_days, topics_months, year, month)
 
