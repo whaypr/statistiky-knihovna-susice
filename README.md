@@ -1,33 +1,52 @@
-# Vizualizace otevřených dat Městské knihovny Sušice
+# Sušice Municipal Library Open Data Visualization
 
-Aplikace dynamicky a interaktivně vizualizuje [otevřená data Městské knihovny Sušice](https://susice.tritius.cz/statistics)
+This application provides a dynamic and interactive visualization of the [open data published by the Sušice Municipal Library](https://susice.tritius.cz/statistics).
 
-Data k vizualizaci jsou skriptem parsována z webu knihovny a ukládána do csv souborů, které aplikace načítá a zpracovává
+The data used for visualization are automatically parsed from the library’s website using the `app/data_parsing.py` script and stored as CSV files. These files are then loaded and processed by the application.
 
-Dostupné [online](https://statistiky-knihovna-susice.herokuapp.com/)
+The application is available **online** at:  
+👉 https://sks.pdddd.one/
 
-## Pro vývojáře
+---
 
-Veškeré části aplikace se spouští z **kořenového adresáře projektu**
+## Developer Guide
 
-Vygenerování dat:
+All components of the application are executed from the **project root directory**.
+
+### Data Fetching
+
+To fetch and parse the data, run:
 ```
 $ python app/data_parsing.py
 ```
-* V místě zavolání skriptu vytvoří adresářovou strukturu a naplní ji daty v csv formátu
-* Skript lze zavolat z jakéhokoliv adresáře, ale data pro aplikaci je nutné vytvořit v **kořenovém adresáři projektu**
-* Není potřeba dělat, data jsou již k dispozici, ale může sloužit k získání aktuálních dat (znovu se zparsují všechna data, ne jen nová)
-* Data není potřeba před zavoláním skriptu mazat
-* Skript se používá i v aplikaci, kde každou hodinu automaticky stáhne nová data
 
-Spuštění aplikace:
+**Notes:**
+- The script creates the required directory structure and populates it with data in CSV format.
+- Although the script can be executed from any directory, the data required by the application must be generated in the **project root directory**.
+- Running the script is not strictly necessary, as the data are already included in the repository.
+- The script can be used to fetch the latest data; it always re-parses **all** available data, not just new entries.
+- Existing data do not need to be deleted before running the script.
+- The same script is used by the application itself to automatically download updated data every hour.
+
+---
+
+### Running the Application
+
+To start the application, run:
 ```
 $ python app/data_visualization.py
 ```
-* Spustí Flask server s aplikací
-* Dostupný lokálně na adrese [127.0.0.1:8050](http://127.0.0.1:8050/)
 
-Provedení testů:
+This command launches a Flask server hosting the application.
+
+The application will be available locally at:  
+👉 http://127.0.0.1:8050/
+
+---
+
+### Running Tests
+
+To execute the parsing tests, run:
 ```
 $ pytest tests/test_parsing.py
 ```
